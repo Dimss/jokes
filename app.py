@@ -2,7 +2,8 @@ import requests
 import os
 from flask import Flask, jsonify
 
-app = application = Flask(__name__, static_folder=os.path.abspath('/Users/dima/code/pycon19-workshop/app/public/'))
+static_path = "{path}/public/".format(path=os.path.dirname(__file__))
+app = application = Flask(__name__, static_folder=os.path.abspath(static_path))
 
 
 @app.route('/api/jokes')

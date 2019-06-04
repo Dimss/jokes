@@ -1,0 +1,110 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: demo-template
+  template: demo-template
+message: Demo template
+metadata:
+  annotations:
+    iconClass: play
+    openshift.io/display-name: Demo
+    tags: demo
+  name: demo
+  namespace: demo
+objects:
+- kind: "ImageStream"
+  apiVersion: "v1"
+  metadata:
+    name: "jokes"
+  spec:
+    tags:
+    - from:
+        kind: "DockerImage"
+        name: "docker-registry.default.svc:5000/demo/jokes"
+      name: "latest"
+      importPolicy:
+        scheduled: true
+- kind: "BuildConfig"
+  apiVersion: "v1"
+  metadata:
+    name: "jokes"
+  spec:
+    runPolicy: "Serial"
+    source:
+      git:
+        uri: "https://github.com/Dimss/jokes.git"
+    strategy:
+      sourceStrategy:
+        from:
+          kind: "ImageStreamTag"
+          name: "python:3.6"
+          namespace: "openshift"
+    output:
+      to:
+        kind: "ImageStreamTag"
+        name: "jokes:latest"
+- apiVersion: "v1"
+  kind: "DeploymentConfig"
+  metadata:
+    name: "jokes"
+  spec:
+    template:
+      metadata:
+        labels:
+          app: "jokes"
+      spec:
+        containers:
+        - name: "jokes"
+          image: " "
+#          readinessProbe:
+#            httpGet:
+#              path: /ui/
+#              port: 8080
+#            initialDelaySeconds: 3
+#            periodSeconds: 3
+#          livenessProbe:
+#            httpGet:
+#              path: /ui/
+#              port: 8080
+#            initialDelaySeconds: 3
+#            periodSeconds: 3
+    replicas: 1
+    triggers:
+    - type: "ConfigChange"
+    - type: "ImageChange"
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - "jokes"
+        from:
+          kind: "ImageStreamTag"
+          name: "jokes:latest"
+    strategy:
+      type: Rolling
+    paused: false
+    minReadySeconds: 0
+    revisionHistoryLimit: 2
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: "jokes"
+  spec:
+    selector:
+      app: "jokes"
+    ports:
+    - name: "http"
+      port: 8080
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    labels:
+      app: "jokes"
+    name: "jokes"
+  spec:
+    port:
+      targetPort: "http"
+    to:
+      kind: "Service"
+      name: "jokes"
+      weight: 100
+    wildcardPolicy: None
