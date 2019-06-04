@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+flask = "*"
+requests = "*"
+gunicorn = "*"
+
+#[requires]
+#python_version = "3.7"
+
+[scripts]
+app  = "gunicorn -b 0.0.0.0:8080 --workers 4 --preload app"
